@@ -1,0 +1,7 @@
+.idea
+bin
+cmake-build-debug
+obj
+CMakeLists
+po*
+zbior
