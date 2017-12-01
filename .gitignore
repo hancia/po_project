@@ -2,6 +2,8 @@
 bin
 cmake-build-debug
 obj
-CMakeLists
+CMakeLists*
 po*
-zbior
+zbior*
+main.o
+main.exe
