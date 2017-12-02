@@ -76,26 +76,30 @@ public:
         for(int i=0; i<12; i++)
             if(T[i]->name==node_name) return T[i];
         cout<<"nie ma takiego wezla"<<endl;
-        return T[0];
+        return NULL;
     }
     A* cd(string node_name, A *root, A* T[], A* curr)
     {
         A* des=find_node(T,node_name);
-        if(des==root) return root;
-        else
-        {
-            if(curr->name>des->name)
-            {
-                for (auto &parent : curr->parents)
+        A* temp=NULL;
+        if(des!=NULL) {
+            if (des == this) return this;
+            if (curr->name > des->name) {
+                for (auto &parent : this->parents)
                     if(parent->name==des->name) {return des;}
-            }
-            else
-            {
-                for (auto &it : curr->children)
+                for (auto &parent : this->parents) {
+                    temp=parent->cd(node_name,root,T,curr);
+                    if (temp->name == des->name) { return des; }
+                }
+            } else {
+                for (auto &it : this->children)
                     if(it->name==des->name) {return des;}
+                for (auto &it : this->children) {
+                    temp=it->cd(node_name,root,T,curr);
+                    if (temp->name == des->name) { return des; }
+                }
             }
-            cout<<"Nieprawidlowa nazwa"<<endl;
-            return curr;
+            return this;
         }
     }
     void show_parents(A*curr, bool &flag,  A* root)
@@ -246,7 +250,7 @@ private:
     int id;
 public:
     B(){name="b";};
-    B(A a){name="b";parents.push_front(&a);};
+    B(A *a){name="b";parents.push_front(a);};
 };
 
 class C:public A{
@@ -254,7 +258,7 @@ private:
     int id;
 public:
     C(){name="c";};
-    C(A a){name="c";parents.push_front(&a);};
+    C(A *a){name="c";parents.push_front(a);};
 };
 
 class D:public A{
@@ -262,7 +266,7 @@ private:
     int id;
 public:
     D(){name="d";};
-    D(A a){name="d";parents.push_front(&a);};
+    D(A *a){name="d";parents.push_front(a);};
 };
 
 class E:public B, public Leaf{
@@ -270,56 +274,56 @@ private:
     int id;
 public:
     E(){name="e";};
-    E(B a){name="e";parents.push_front(&a);};
+    E(A *a){name="e";parents.push_front(a);};
 };
 class F:public B, public Leaf{
 private:
     int id;
 public:
     F(){name="f";};
-    F(B a){name="f";parents.push_front(&a);};
+    F(A *a){name="f";parents.push_front(a);};
 };
 class G:public C, public Leaf{
 private:
     int id;
 public:
     G(){name="g";};
-    G(C a){name="g";parents.push_front(&a);};
+    G(A *a){name="g";parents.push_front(a);};
 };
 class H:public C, public Leaf{
 private:
     int id;
 public:
     H(){name="h";};
-    H(C a){name="h";parents.push_front(&a);};
+    H(A *a){name="h";parents.push_front(a);};
 };
 class I:public virtual D{
 private:
     int id;
 public:
     I(){name="i";};
-    I(A a){name="i";parents.push_front(&a);};
+    I(A *a){name="i";parents.push_front(a);};
 };
 class J:public virtual D{
 private:
     int id;
 public:
     J(){name="j";};
-    J(A a){name="j";parents.push_front(&a);};
+    J(A *a){name="j";parents.push_front(a);};
 };
 class K:public I, public Leaf{
 private:
     int id;
 public:
     K(){name="k";};
-    K(I a){name="k";parents.push_front(&a);};
+    K(A *a){name="k";parents.push_front(a);};
 };
 class L:public I, public J, public Leaf{
 private:
     int id;
 public:
     L(){name="l";};
-    L(I a, J b){name="l";parents.push_front(&a);parents.push_front(&b);};
+    L(A *a, A *b){name="l";parents.push_front(a);parents.push_front(b);};
 };
 void input(string commands[])
 {
@@ -343,17 +347,17 @@ int main()
 {
     A* T[12];
     A a;
-    B b(a);
-    C c(a);
-    D d(a);
-    E e(b);
-    F f(b);
-    G g(c);
-    H h(c);
-    I i(d);
-    J j(d);
-    K k(i);
-    L l(i,j);
+    B b(&a);
+    C c(&a);
+    D d(&a);
+    E e(&b);
+    F f(&b);
+    G g(&c);
+    H h(&c);
+    I i(&d);
+    J j(&d);
+    K k(&i);
+    L l(&i,&j);
     T[0]=&a;
     T[1]=&b;
     T[2]=&c;
@@ -378,8 +382,10 @@ int main()
     i.children.push_front(&k);
     i.children.push_front(&l);
     j.children.push_front(&l);
-    A * curr;
+    A* curr;
+    A* temp;
     curr = new A;
+    temp=NULL;
     curr = &a;
     Leaf* nowy = new Leaf;
 
@@ -388,8 +394,12 @@ int main()
     {
         cout<<"wprowadz komende: ";
         input(commands);
-        if(commands[0]=="cd")
-            curr=curr->cd(commands[1],&a,T,curr);
+        if(commands[0]=="cd") {
+            temp = curr->cd(commands[1], &a, T, curr);
+            if(temp!=curr) curr=temp;
+            else
+                cout<<"Nieprawidlowa nazwa"<<endl;
+        }
         if(commands[0]=="tree")
             (&a)->tree(0);
         if(commands[0]=="mo")
