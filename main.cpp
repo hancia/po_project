@@ -13,27 +13,27 @@ public:
 class Leaf{
 public:
     list<Object*> objects;
-    void mo(string o_name,string o_content)
+    void mo(string o_name,string o_content) //funkcja dodajaca nowy element do biezacego liscia
     {
         int flag=0;
-        for(auto it=objects.begin();it!=objects.end(); it++)
+        for(auto it=objects.begin();it!=objects.end(); it++) //przeszukuje lisc w poszukiwaniu juz istniejacego obiektu o tej nazwie
             if((*it)->name==o_name)
             {
                 flag=1;
                 break;
             }
-        if(flag==0)
+        if(flag==0) //jesli nie znalazl obiektu, dodaje go
         {
             Object *neww= new Object(o_name,o_content);
             this->objects.push_back(neww);
         }
         else cout<<"Obiekt o podanej nazwie juz instnieje"<<endl;
     }
-    void DO(string o_name)
+    void DO(string o_name)//funkcja usuwajaca obiekt z biezacego liscia
     {
         for(auto it=objects.begin(); it!=objects.end();it++)
         {
-            if((*it)->name==o_name)
+            if((*it)->name==o_name) //jezeli znajdzie obiekt o tej nazwie, usuwa go
             {
                 objects.remove((*it));
                 return;
@@ -41,11 +41,11 @@ public:
         }
         cout<<"Nie znaleziono takiego elementu";
     }
-    void mdo(string o_name)
+    void mdo(string o_name)//funkcja modyfikujaca obiekt o podanej nazwie
     {
         string new_cont,new_name;
         for (auto &object : objects)
-            if(object->name==o_name)
+            if(object->name==o_name)//jesli znajdzie ten obiekt, prosi o podanie nowej nazwy i zawartosci i zamienia je
             {
                 cout<<endl<<"Nowa nazwa: "; cin>>new_name;
                 cout<<endl<<"Nowa zawartosc: "; cin>>new_cont;
@@ -55,7 +55,7 @@ public:
             }
         cout<<"Nie znaleziono takiego elementu";
     }
-    void dir()
+    void dir()//wyswietla wszystkie obiekty dla danego liscia
     {
         for (auto &object : objects) {
             cout<<(object)->name<<endl;
@@ -71,107 +71,90 @@ protected:
 public:
     list<A*> parents;
     list<A*> children;
-    A* find_node(A* T[],string node_name)
+    A* find_node(A* T[],string node_name) //szuka wskaznika do podanego liscia w tablicy wszystkich wskaznikow
     {
         for(int i=0; i<12; i++)
             if(T[i]->name==node_name) return T[i];
         cout<<"nie ma takiego wezla"<<endl;
         return NULL;
     }
-    A* cd(string node_name, A *root, A* T[], A* curr)
+    A* cd(string node_name, A *root, A* curr) //sluzy do zmiany biezacego wezla
     {
-        A* des=find_node(T,node_name);
         A* temp=NULL;
-        if(des!=NULL) {
-            if (des == this) return this;
-            if (curr->name > des->name) {
-                for (auto &parent : this->parents)
-                    if(parent->name==des->name) {return des;}
-                for (auto &parent : this->parents) {
-                    temp=parent->cd(node_name,root,T,curr);
-                    if (temp->name == des->name) { return des; }
-                }
-            } else {
-                for (auto &it : this->children)
-                    if(it->name==des->name) {return des;}
-                for (auto &it : this->children) {
-                    temp=it->cd(node_name,root,T,curr);
-                    if (temp->name == des->name) { return des; }
-                }
+        if (node_name == this->name) return this; //jesli jestes w podanym wezle
+        if (curr->name > node_name) {//jesli szukasz wezla wyzej w drzewie
+            for (auto &parent : this->parents)//przeglada liste rodzicow
+                if(parent->name==node_name) {return parent;} //jesli znajdzie na liscie rodzicow
+            for (auto &parent : this->parents) {//jesli nie znajdzie, wywoluje funkcje rekurencyjnie od kazdego rodzica
+                temp=parent->cd(node_name,root,curr);
+                if (temp->name == node_name) { return temp; }
             }
-            return this;
+        } else {//jezeli szukasz wezla nizej w drzewie
+            for (auto &it : this->children)//przeglada liste dzieci
+                if(it->name==node_name) {return it;}//jezeli znajdzie na liscie dzieci
+            for (auto &it : this->children) {//jezeli nie, wywoluje funkcje rekurencyjnie od kazdego dziecka
+                temp=it->cd(node_name,root,curr);
+                if (temp->name == node_name) { return temp; }
+            }
+        }
+        return this;//jesli nigdzie wczesniej nie zwroci wyniku, zwraca wezel, w ktorym bylismy na poczatku
+    }
+    void show_parents()//przeglada i wyswietla wszystkich rodzicow
+    {
+        for(auto &it:this->parents)
+        {
+            if(this->children.empty()) cout<<this->name<<",";
+            cout<<it->name<<",";
+            it->show_parents();
+            cout<<endl;
         }
     }
-    void show_parents(A*curr, bool &flag,  A* root)
+    void show(string o_name, Leaf* nowy,A* root)//funkcja pokazujaca obiekt o podanej nazwie
     {
-        if(this->children.empty()) {
-            if (this == curr) {
-                cout << this->name << '/';
-                flag = 1;
-                return;
-            }
-            else {
-                flag=0;
-                return;
-            }
-        }
-        else {
-            for (auto &it: this->children) {
-                it->show_parents(curr, flag,root);
-                if (flag == 1) {
-                    cout << this->name << "/";
-                }
-            }
-        }
-    }
-    void show(string o_name, Leaf* nowy,A* root)
-    {
-        bool flag=0;
-        if(this->children.empty())
+        string parent;
+        if(this->children.empty())//jezeli jestesmy w lisciu
         {
             nowy = dynamic_cast<Leaf*>(this);
-            for (auto &object : nowy->objects) {
-                if(object->name==o_name)
+            for (auto &object : nowy->objects) {//przeglada obiekty liscia
+                if(object->name==o_name)//jezeli znajdzie obiekt na liscie, wyswietla go
                 {
-                    flag=0;
                     cout<<"Nazwa obiektu: "<< object->name<<endl;
                     cout<<"Zawartosc: "<< object->content<<endl;
-                    root->show_parents(this,flag,root);
+                    this->show_parents();
                     cout<<endl;
                 }
             }
         }
         else
         {
-            for (auto &it : this->children) {
-                if(it->children.empty()) {
+            for (auto &it : this->children) {//jezeli nie jestesmy w lisciu, przegladamy cala liste dzieci
+                if(it->children.empty()) {//jezeli trafimy na lisc, przeszukuje liste obiektow
                     nowy = dynamic_cast<Leaf *>(it);
                     for (auto &object : nowy->objects) {
                         if (object->name == o_name) {
-                            flag=0;
                             cout << "Nazwa obiektu: " << object->name << endl;
                             cout << "Zawartosc: " << object->content << endl;
-                            root->show_parents(it,flag,root);
+                            it->show_parents();
                             cout<<endl;
                         }
                     }
                 }
-                else {
+                else {//jezeli nie, wywoluje funkcje od wezla
                     it->show(o_name,nowy,root);
                 }
             }
         }
     }
-    void print(Leaf* nowy)
+    void print(Leaf* nowy)//wyswietla obiekty widoczne z danego wezla
     {
-        if(this->children.empty())
+        if(this->children.empty())//jezeli jestesmy w lisciu, wywoluje funkcje wyswietlajaca wszystkie obiekty w lisciu
         {
             nowy = dynamic_cast<Leaf*>(this);
             nowy->dir();
         }
-        else
+        else//jezeli nie, przeglada dzieci
         {
-            for (auto &it : this->children) {
+            for (auto &it : this->children) {//jezeli trafi na lisc, wywoluje funkcje dir, jezeli nie, wywoluje print od wezla
                 if(it->children.empty())
                 {
                     nowy = dynamic_cast<Leaf*>(it);
@@ -181,26 +164,26 @@ public:
             }
         }
     }
-    void tree(int t)
+    void tree(int t)//wyswietla strukture
     {
-        for(int i=0;i<t;i++)
+        for(int i=0;i<t;i++)//wyswietla wymagana liczbe spacji
             cout<<" ";
         cout<<this->name<<endl;
-        for (auto &it : this->children) {
+        for (auto &it : this->children) {//wywoluje sie od wszystkich dzieci, powielajac liczbe spacji o 1, im glebiej w rekurencji
             it->tree(t+1);
         }
     }
-    void save(A* T[], Leaf* nowy)
+    void save(A* T[], Leaf* nowy)//zapisywanie do pliku
     {
         ofstream plik;
         plik.open("zbior.txt");
-        for(int i=0; i<12; i++)
+        for(int i=0; i<12; i++)//dla wszystkich wezlow drzewa
         {
-            if(T[i]->children.empty())
+            if(T[i]->children.empty())//jezeli jestesmy w lisciu
             {
-                plik<<"Lisc "<<T[i]->name<<endl;
+                plik<<"Lisc "<<T[i]->name<<endl;//wypisuje nazwe liscia
                 nowy = dynamic_cast<Leaf*>(T[i]);
-                for (auto &object : nowy->objects)
+                for (auto &object : nowy->objects)//wypisuje wszystkie obiekty liscia
                 {
                     plik<< object->name<<" ";
                     plik<<object->content<<endl;
@@ -209,13 +192,13 @@ public:
         }
         plik.close();
     }
-    void read(A* T[],Leaf* nowy)
+    void read(A* T[],Leaf* nowy)//odczytuje z pliku
     {
         ifstream plik;
         string s1, s2;
         A* curr;
         plik.open("zbior.txt");
-        while(!plik.eof())
+        while(!plik.eof())//pobiera po linii pliku, dzieli na dwa slowa, dopoki plik sie nie skonczy
         {
             string s;
             s1="",s2="";
@@ -230,10 +213,10 @@ public:
                     s2+=s[i];
                 i++;
             }
-            if(s1=="Lisc") {
+            if(s1=="Lisc") {//jesli pierwszym slowem jest lisc, szuka wezla o podanej nazwie
                 curr = find_node(T, s2);
             }
-            else
+            else//jezeli nie, dodaje nowy obiekt do znalezionego wczesniej liscia
             {
                 nowy = dynamic_cast<Leaf*>(curr);
                 if(s2!="")
@@ -324,6 +307,7 @@ private:
 public:
     L(){name="l";};
     L(A *a, A *b){name="l";parents.push_front(a);parents.push_front(b);};
+
 };
 void input(string commands[])
 {
@@ -395,7 +379,7 @@ int main()
         cout<<"wprowadz komende: ";
         input(commands);
         if(commands[0]=="cd") {
-            temp = curr->cd(commands[1], &a, T, curr);
+            temp = curr->cd(commands[1], &a, curr);
             if(temp!=curr) curr=temp;
             else
                 cout<<"Nieprawidlowa nazwa"<<endl;
