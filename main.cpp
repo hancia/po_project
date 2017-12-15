@@ -32,7 +32,7 @@ public:
             this->objects.push_back(neww);
             return neww;
         }
-        else cout<<"Obiekt o podanej nazwie juz instnieje"<<endl;
+        else cout<<"Obiekt o podanej nazwie juz instnieje";
     }
     void DO(string o_name)//funkcja usuwajaca obiekt z biezacego liscia
     {
@@ -73,7 +73,7 @@ public:
 class A{
 protected:
     string name;
-    int id_number;
+    string id_number;
 
 public:
     list<A*> parents;
@@ -94,7 +94,7 @@ public:
     }
     void edit_parents(Object *O)
     {
-        int temp;
+        string temp;
         for(auto it:O->o_parents) {
             cout << it->name << " " << it->id_number << " Wprowadz nowy id_number ";
             cin>>temp;
@@ -288,70 +288,71 @@ public:
         }
         plik.close();
     }
-    A(){name="a";id_number=1;}
+    A(){name="a";id_number="1";}
     virtual ~A() {}
 };
 class B:public A{
 public:
-    B(){name="b";id_number=2;};
-    B(A *a){name="b";parents.push_front(a);id_number=2;};
+    B(){name="b";id_number="2";};
+    B(A *a){name="b";parents.push_front(a);id_number="2";};
 };
 
 class C:public A{
 public:
-    C(){name="c";id_number=3;};
-    C(A *a){name="c";parents.push_front(a);id_number=3;};
+    C(){name="c";id_number="3";};
+    C(A *a){name="c";parents.push_front(a);id_number="3";};
 };
 
 class D:public A{
 public:
-    D(){name="d";id_number=4;};
-    D(A *a){name="d";parents.push_front(a);id_number=4;};
+    D(){name="d";id_number="4";};
+    D(A *a){name="d";parents.push_front(a);id_number="4";};
 };
 
 class E:public B, public Leaf{
 public:
-    E(){name="e";id_number=5;};
-    E(A *a){name="e";parents.push_front(a);id_number=5;};
+    E(){name="e";id_number="5";};
+    E(A *a){name="e";parents.push_front(a);id_number="5";};
 };
 class F:public B, public Leaf{
 public:
-    F(){name="f";id_number=6;};
-    F(A *a){name="f";parents.push_front(a);id_number=6;};
+    F(){name="f";id_number="6";};
+    F(A *a){name="f";parents.push_front(a);id_number="6";};
 };
 class G:public C, public Leaf{
 public:
-    G(){name="g";id_number=7;};
-    G(A *a){name="g";parents.push_front(a);id_number=7;};
+    G(){name="g";id_number="7";};
+    G(A *a){name="g";parents.push_front(a);id_number="7";};
 };
 class H:public C, public Leaf{
 public:
-    H(){name="h";id_number=8;};
-    H(A *a){name="h";parents.push_front(a);id_number=8;};
+    H(){name="h";id_number="8";};
+    H(A *a){name="h";parents.push_front(a);id_number="8";};
 };
 class I:public virtual D{
 public:
-    I(){name="i";id_number=9;};
-    I(A *a){name="i";parents.push_front(a);id_number=9;};
+    I(){name="i";id_number="9";};
+    I(A *a){name="i";parents.push_front(a);id_number="9";};
 };
 class J:public virtual D{
 public:
-    J(){name="j";id_number=10;};
-    J(A *a){name="j";parents.push_front(a);id_number=10;};
+    J(){name="j";id_number="10";};
+    J(A *a){name="j";parents.push_front(a);id_number="10";};
 };
 class K:public I, public Leaf{
 public:
-    K(){name="k";id_number=11;};
-    K(A *a){name="k";parents.push_front(a);id_number=11;};
+    K(){name="k";id_number="11";};
+    K(A *a){name="k";parents.push_front(a);id_number="11";};
 };
 class L:public I, public J, public Leaf{
 public:
-    L(){name="l";id_number=12;};
-    L(A *a, A *b){name="l";parents.push_front(a);parents.push_front(b);id_number=12;};
+    L(){name="l";id_number="12";};
+    L(A *a, A *b){name="l";parents.push_front(a);parents.push_front(b);id_number="12";};
 
 };
-void input(string commands[])
+void input(string commands[],bool flag)
 {
+    if(flag==1)
     cout<<"wprowadz komende: ";
     string s1,s2,s;
     getline(cin,s);
@@ -415,65 +416,87 @@ int main()
     curr = &a;
     Leaf* nowy = new Leaf;
     Object *pom;
+    int flag=1;
     curr->reset(nowy);
 
     string commands[2];
     do
     {
-        input(commands);
-        if(commands[0]=="cd") {
-            temp = curr->cd(commands[1], &a, curr);
-            if(temp!=curr) curr=temp;
-            else
-                cout<<"Nieprawidlowa nazwa"<<endl;
-        }
-        if(commands[0]=="tree")
-            (&a)->tree(0);
-        if(commands[0]=="mo")
-            if(curr->children.empty())
-            {
-                string o_cont;
-                cout<<"Podaj zawartosc obiektu: ";
-                cin>>o_cont;
-                nowy = dynamic_cast<Leaf*>(curr);
-                pom=nowy->mo(commands[1],o_cont);
-                if(pom) curr->push_parents(pom);
+        input(commands,flag);
+        if(commands[0]!=""){
+            if(commands[0]=="cd") {
+                temp = curr->cd(commands[1], &a, curr);
+                if(temp!=curr) curr=temp;
+                else
+                    cout<<"Nieprawidlowa nazwa"<<endl;
+            }
+            else{
+                if(commands[0]=="tree")
+                    (&a)->tree(0);
+                else{
+                    if(commands[0]=="mo")
+                        if(curr->children.empty())
+                        {
+                            string o_cont;
+                            cout<<"Podaj zawartosc obiektu: ";
+                            cin>>o_cont;
+                            nowy = dynamic_cast<Leaf*>(curr);
+                            pom=nowy->mo(commands[1],o_cont);
+                            if(pom) curr->push_parents(pom);
 
+                        }
+                        else cout<<"Nie jestes w lisciu"<<endl;
+                    else{
+                        if(commands[0]=="do")
+                            if(curr->children.empty())
+                            {
+                                nowy = dynamic_cast<Leaf*>(curr);
+                                nowy->DO(commands[1]);
+                            }
+                            else cout<<"Nie jestes w lisciu"<<endl;
+                        else{
+                            if(commands[0]=="mdo")
+                                if(curr->children.empty())
+                                {
+                                    nowy = dynamic_cast<Leaf*>(curr);
+                                    pom=nowy->mdo(commands[1]);
+                                    if(pom) curr->edit_parents(pom);
+                                }
+                                else cout<<"Nie jestes w lisciu"<<endl;
+                            else{
+                                if(commands[0]=="dir")
+                                {
+                                    a.reset(nowy);
+                                    curr->print(nowy);
+                                }
+                                else{
+                                    if(commands[0]=="show")
+                                    {
+                                        a.reset(nowy);
+                                        a.show(commands[1],nowy,&a);
+                                    }
+                                    else{
+                                        if(commands[0]=="save")
+                                        {
+                                            curr->save(T,nowy);
+                                        }
+                                        else{
+                                        if(commands[0]=="read")
+                                        {
+                                            curr->read(T,nowy,&a);
+                                        }
+                                        else if(commands[0]!="exit")cout<<"Nieprawidlowa komenda"<<endl;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            else cout<<"Nie jestes w lisciu"<<endl;
-        if(commands[0]=="do")
-            if(curr->children.empty())
-            {
-                nowy = dynamic_cast<Leaf*>(curr);
-                nowy->DO(commands[1]);
-            }
-            else cout<<"Nie jestes w lisciu"<<endl;
-        if(commands[0]=="mdo")
-            if(curr->children.empty())
-            {
-                nowy = dynamic_cast<Leaf*>(curr);
-                pom=nowy->mdo(commands[1]);
-                if(pom) curr->edit_parents(pom);
-            }
-            else cout<<"Nie jestes w lisciu"<<endl;
-        if(commands[0]=="dir")
-        {
-            a.reset(nowy);
-            curr->print(nowy);
+            flag=1;
         }
-        if(commands[0]=="show")
-        {
-            a.reset(nowy);
-            a.show(commands[1],nowy,&a);
-        }
-        if(commands[0]=="save")
-        {
-            curr->save(T,nowy);
-        }
-        if(commands[0]=="read")
-        {
-            curr->read(T,nowy,&a);
-        }
+        else flag=0;
     }while(commands[0]!="exit");
     return 0;
 }
