@@ -3,17 +3,21 @@
 #include <fstream>
 using namespace std;
 
+class A;
+
 class Object{
 public:
     string name, content;
+    list <A*> o_parents;
     Object(string a){name=a,content="";}
     Object(string a, string b): name(a),content(b){}
 };
 
 class Leaf{
 public:
+    bool visited;
     list<Object*> objects;
-    void mo(string o_name,string o_content) //funkcja dodajaca nowy element do biezacego liscia
+    Object* mo(string o_name,string o_content) //funkcja dodajaca nowy element do biezacego liscia
     {
         int flag=0;
         for(auto it=objects.begin();it!=objects.end(); it++) //przeszukuje lisc w poszukiwaniu juz istniejacego obiektu o tej nazwie
@@ -26,6 +30,7 @@ public:
         {
             Object *neww= new Object(o_name,o_content);
             this->objects.push_back(neww);
+            return neww;
         }
         else cout<<"Obiekt o podanej nazwie juz instnieje"<<endl;
     }
@@ -41,17 +46,19 @@ public:
         }
         cout<<"Nie znaleziono takiego elementu";
     }
-    void mdo(string o_name)//funkcja modyfikujaca obiekt o podanej nazwie
+    Object* mdo(string o_name)//funkcja modyfikujaca obiekt o podanej nazwie
     {
         string new_cont,new_name;
+        int temp;
         for (auto &object : objects)
             if(object->name==o_name)//jesli znajdzie ten obiekt, prosi o podanie nowej nazwy i zawartosci i zamienia je
             {
-                cout<<endl<<"Nowa nazwa: "; cin>>new_name;
-                cout<<endl<<"Nowa zawartosc: "; cin>>new_cont;
+                cout<<"Nowa nazwa: "; cin>>new_name;
+                cout<<"Nowa zawartosc: "; cin>>new_cont;
+                cout<<"Podaj nowe parametry obiektu: "<<endl;
                 object->name=new_name;
                 object->content=new_cont;
-                return;
+                return object;
             }
         cout<<"Nie znaleziono takiego elementu";
     }
@@ -64,13 +71,36 @@ public:
     Leaf(){};
 };
 class A{
-private:
-    int id;
 protected:
     string name;
+    int id_number;
+
 public:
     list<A*> parents;
     list<A*> children;
+    void push_parents(Object* O)//przeglada i wyswietla wszystkich rodzicow
+    {
+        if(this->children.empty()) {
+            //cout<<this->name<<" "<<this->id_number<<endl;
+            O->o_parents.push_back(this);
+        }
+        for(auto &it:this->parents)
+        {
+            //cout<<it->name<<" "<<it->id_number<<endl;
+            O->o_parents.push_back(it);
+        }
+        if(!this->parents.empty())
+            this->parents.front()->push_parents(O);
+    }
+    void edit_parents(Object *O)
+    {
+        int temp;
+        for(auto it:O->o_parents) {
+            cout << it->name << " " << it->id_number << " Wprowadz nowy id_number ";
+            cin>>temp;
+            it->id_number=temp;
+        }
+    }
     A* find_node(A* T[],string node_name) //szuka wskaznika do podanego liscia w tablicy wszystkich wskaznikow
     {
         for(int i=0; i<12; i++)
@@ -99,16 +129,6 @@ public:
         }
         return this;//jesli nigdzie wczesniej nie zwroci wyniku, zwraca wezel, w ktorym bylismy na poczatku
     }
-    void show_parents()//przeglada i wyswietla wszystkich rodzicow
-    {
-        for(auto &it:this->parents)
-        {
-            if(this->children.empty()) cout<<this->name<<",";
-            cout<<it->name<<",";
-            it->show_parents();
-            cout<<endl;
-        }
-    }
     void show(string o_name, Leaf* nowy,A* root)//funkcja pokazujaca obiekt o podanej nazwie
     {
         string parent;
@@ -118,10 +138,17 @@ public:
             for (auto &object : nowy->objects) {//przeglada obiekty liscia
                 if(object->name==o_name)//jezeli znajdzie obiekt na liscie, wyswietla go
                 {
-                    cout<<"Nazwa obiektu: "<< object->name<<endl;
-                    cout<<"Zawartosc: "<< object->content<<endl;
-                    this->show_parents();
-                    cout<<endl;
+                    if(nowy->visited!=1){
+                        cout<<"Nazwa obiektu: "<< object->name<<endl;
+                        cout<<"Zawartosc: "<< object->content<<endl;
+                        for(auto p:object->o_parents)
+                        {
+                            cout<<p->name<<" "<<p->id_number<<endl;
+                        }
+                        //this->show_parents();
+                        //cout<<endl;
+                        nowy->visited=1;
+                    }
                 }
             }
         }
@@ -131,11 +158,19 @@ public:
                 if(it->children.empty()) {//jezeli trafimy na lisc, przeszukuje liste obiektow
                     nowy = dynamic_cast<Leaf *>(it);
                     for (auto &object : nowy->objects) {
-                        if (object->name == o_name) {
-                            cout << "Nazwa obiektu: " << object->name << endl;
-                            cout << "Zawartosc: " << object->content << endl;
-                            it->show_parents();
-                            cout<<endl;
+                        if (object->name == o_name)
+                        {
+                            if(nowy->visited!=1){
+                                cout << "Nazwa obiektu: " << object->name << endl;
+                                cout << "Zawartosc: " << object->content << endl;
+                                for(auto p:object->o_parents)
+                                {
+                                    cout<<p->name<<" "<<p->id_number<<endl;
+                                }
+                                //it->show_parents();
+                                //cout<<endl;
+                                nowy->visited=1;
+                            }
                         }
                     }
                 }
@@ -145,12 +180,34 @@ public:
             }
         }
     }
+    void reset(Leaf* nowy)
+    {
+        if(this->children.empty())
+        {
+            nowy = dynamic_cast<Leaf*>(this);
+            nowy->visited=0;
+        }
+        else
+        {
+            for (auto &it : this->children) {
+                if(it->children.empty())
+                {
+                    nowy = dynamic_cast<Leaf*>(it);
+                    nowy->visited=0;
+                }
+                else it->reset(nowy);
+            }
+        }
+    }
     void print(Leaf* nowy)//wyswietla obiekty widoczne z danego wezla
     {
         if(this->children.empty())//jezeli jestesmy w lisciu, wywoluje funkcje wyswietlajaca wszystkie obiekty w lisciu
         {
             nowy = dynamic_cast<Leaf*>(this);
-            nowy->dir();
+            if(nowy->visited!=1){
+                nowy->dir();
+                nowy->visited=1;
+            }
         }
         else//jezeli nie, przeglada dzieci
         {
@@ -158,7 +215,10 @@ public:
                 if(it->children.empty())
                 {
                     nowy = dynamic_cast<Leaf*>(it);
-                    nowy->dir();
+                    if(nowy->visited!=1){
+                        nowy->dir();
+                        nowy->visited=1;
+                    }
                 }
                 else it->print(nowy);
             }
@@ -192,11 +252,12 @@ public:
         }
         plik.close();
     }
-    void read(A* T[],Leaf* nowy)//odczytuje z pliku
+    void read(A* T[],Leaf* nowy, A* root)//odczytuje z pliku
     {
         ifstream plik;
         string s1, s2;
         A* curr;
+        Object* temp;
         plik.open("zbior.txt");
         while(!plik.eof())//pobiera po linii pliku, dzieli na dwa slowa, dopoki plik sie nie skonczy
         {
@@ -219,98 +280,79 @@ public:
             else//jezeli nie, dodaje nowy obiekt do znalezionego wczesniej liscia
             {
                 nowy = dynamic_cast<Leaf*>(curr);
-                if(s2!="")
-                nowy->mo(s1,s2);
+                if(s2!="") {
+                    temp=nowy->mo(s1, s2);
+                    curr->push_parents(temp);
+                }
             }
         }
         plik.close();
     }
-    A(){name="a";}
+    A(){name="a";id_number=1;}
     virtual ~A() {}
 };
 class B:public A{
-private:
-    int id;
 public:
-    B(){name="b";};
-    B(A *a){name="b";parents.push_front(a);};
+    B(){name="b";id_number=2;};
+    B(A *a){name="b";parents.push_front(a);id_number=2;};
 };
 
 class C:public A{
-private:
-    int id;
 public:
-    C(){name="c";};
-    C(A *a){name="c";parents.push_front(a);};
+    C(){name="c";id_number=3;};
+    C(A *a){name="c";parents.push_front(a);id_number=3;};
 };
 
 class D:public A{
-private:
-    int id;
 public:
-    D(){name="d";};
-    D(A *a){name="d";parents.push_front(a);};
+    D(){name="d";id_number=4;};
+    D(A *a){name="d";parents.push_front(a);id_number=4;};
 };
 
 class E:public B, public Leaf{
-private:
-    int id;
 public:
-    E(){name="e";};
-    E(A *a){name="e";parents.push_front(a);};
+    E(){name="e";id_number=5;};
+    E(A *a){name="e";parents.push_front(a);id_number=5;};
 };
 class F:public B, public Leaf{
-private:
-    int id;
 public:
-    F(){name="f";};
-    F(A *a){name="f";parents.push_front(a);};
+    F(){name="f";id_number=6;};
+    F(A *a){name="f";parents.push_front(a);id_number=6;};
 };
 class G:public C, public Leaf{
-private:
-    int id;
 public:
-    G(){name="g";};
-    G(A *a){name="g";parents.push_front(a);};
+    G(){name="g";id_number=7;};
+    G(A *a){name="g";parents.push_front(a);id_number=7;};
 };
 class H:public C, public Leaf{
-private:
-    int id;
 public:
-    H(){name="h";};
-    H(A *a){name="h";parents.push_front(a);};
+    H(){name="h";id_number=8;};
+    H(A *a){name="h";parents.push_front(a);id_number=8;};
 };
 class I:public virtual D{
-private:
-    int id;
 public:
-    I(){name="i";};
-    I(A *a){name="i";parents.push_front(a);};
+    I(){name="i";id_number=9;};
+    I(A *a){name="i";parents.push_front(a);id_number=9;};
 };
 class J:public virtual D{
-private:
-    int id;
 public:
-    J(){name="j";};
-    J(A *a){name="j";parents.push_front(a);};
+    J(){name="j";id_number=10;};
+    J(A *a){name="j";parents.push_front(a);id_number=10;};
 };
 class K:public I, public Leaf{
-private:
-    int id;
 public:
-    K(){name="k";};
-    K(A *a){name="k";parents.push_front(a);};
+    K(){name="k";id_number=11;};
+    K(A *a){name="k";parents.push_front(a);id_number=11;};
 };
 class L:public I, public J, public Leaf{
-private:
-    int id;
 public:
-    L(){name="l";};
-    L(A *a, A *b){name="l";parents.push_front(a);parents.push_front(b);};
+    L(){name="l";id_number=12;};
+    L(A *a, A *b){name="l";parents.push_front(a);parents.push_front(b);id_number=12;};
 
 };
 void input(string commands[])
 {
+    cout<<"wprowadz komende: ";
     string s1,s2,s;
     getline(cin,s);
     unsigned int i=0;
@@ -372,11 +414,12 @@ int main()
     temp=NULL;
     curr = &a;
     Leaf* nowy = new Leaf;
+    Object *pom;
+    curr->reset(nowy);
 
     string commands[2];
     do
     {
-        cout<<"wprowadz komende: ";
         input(commands);
         if(commands[0]=="cd") {
             temp = curr->cd(commands[1], &a, curr);
@@ -393,27 +436,35 @@ int main()
                 cout<<"Podaj zawartosc obiektu: ";
                 cin>>o_cont;
                 nowy = dynamic_cast<Leaf*>(curr);
-                nowy->mo(commands[1],o_cont);
+                pom=nowy->mo(commands[1],o_cont);
+                if(pom) curr->push_parents(pom);
+
             }
+            else cout<<"Nie jestes w lisciu"<<endl;
         if(commands[0]=="do")
             if(curr->children.empty())
             {
                 nowy = dynamic_cast<Leaf*>(curr);
                 nowy->DO(commands[1]);
             }
+            else cout<<"Nie jestes w lisciu"<<endl;
         if(commands[0]=="mdo")
             if(curr->children.empty())
             {
                 nowy = dynamic_cast<Leaf*>(curr);
-                nowy->mdo(commands[1]);
+                pom=nowy->mdo(commands[1]);
+                if(pom) curr->edit_parents(pom);
             }
+            else cout<<"Nie jestes w lisciu"<<endl;
         if(commands[0]=="dir")
         {
+            a.reset(nowy);
             curr->print(nowy);
         }
         if(commands[0]=="show")
         {
-            curr->show(commands[1],nowy,&a);
+            a.reset(nowy);
+            a.show(commands[1],nowy,&a);
         }
         if(commands[0]=="save")
         {
@@ -421,7 +472,7 @@ int main()
         }
         if(commands[0]=="read")
         {
-            curr->read(T,nowy);
+            curr->read(T,nowy,&a);
         }
     }while(commands[0]!="exit");
     return 0;
